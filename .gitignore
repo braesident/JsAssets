@@ -1,0 +1,9 @@
+/vendor/
+/node_modules/
+/.gtm/
+/log/
+*.lic
+.composer/cache
+.composer/install.log
+/**/*/templates_c
+composer.lock

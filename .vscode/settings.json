@@ -1,0 +1,7 @@
+{
+  "intelephense.environment.includePaths": [
+      "vendor"
+  ],
+  "intelephense.references.exclude": [
+  ]
+}
