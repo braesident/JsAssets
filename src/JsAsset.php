@@ -30,31 +30,34 @@ final class JsAsset
       $assets[] = $fileKey;
     }
 
-    $jcomposer = file_get_contents(\dirname(__DIR__, 1).'/composer.json');
-    $composer  = json_decode($jcomposer);
+    $composerJson = \dirname(__DIR__, 4).'/composer.json';
+    if (file_exists($composerJson)) {
+      $jcomposer = file_get_contents($composerJson);
+      $composer  = json_decode($jcomposer);
 
-    foreach ($composer->require as $repo => $_version) {
-      if (\in_array($repo, self::IGNORE_REPOS, true)) {
-        continue;
-      }
-      $repoSet = explode('/', $repo);
-      if (\count($repoSet) < 2) {
-        continue;
-      }
-
-      $repoPath = \dirname(__DIR__, 1)."/vendor/{$repoSet[0]}/{$repoSet[1]}/";
-
-      foreach (new DirectoryIterator($repoPath) as $fileinfo) {
-        if ('js' !== $fileinfo->getExtension()) {
+      foreach ($composer->require as $repo => $_version) {
+        if (\in_array($repo, self::IGNORE_REPOS, true)) {
+          continue;
+        }
+        $repoSet = explode('/', $repo);
+        if (\count($repoSet) < 2) {
           continue;
         }
 
-        $fileKey = $fileinfo->getBasename('.js');
-        if (\in_array($fileKey, $assets, true)) {
-          $fileKey = "{$repoSet[0]}.{$repoSet[1]}.{$fileKey}";
-        }
+        $repoPath = \dirname(__DIR__, 3)."/{$repoSet[0]}/{$repoSet[1]}/";
 
-        $assets[] = $fileKey;
+        foreach (new DirectoryIterator($repoPath) as $fileinfo) {
+          if ('js' !== $fileinfo->getExtension()) {
+            continue;
+          }
+
+          $fileKey = $fileinfo->getBasename('.js');
+          if (\in_array($fileKey, $assets, true)) {
+            $fileKey = "{$repoSet[0]}.{$repoSet[1]}.{$fileKey}";
+          }
+
+          $assets[] = $fileKey;
+        }
       }
     }
 
@@ -95,6 +98,16 @@ final class JsAsset
 
     $path = array_pop($pathes);
 
+    if ($minify) {
+      if (file_exists(\dirname(__DIR__, 1)."/cache/mini/{$path}")) {
+        return file_get_contents(\dirname(__DIR__, 1)."/cache/mini/{$path}");
+      }
+    } else {
+      if (file_exists(\dirname(__DIR__, 1)."/cache/{$path}")) {
+        return file_get_contents(\dirname(__DIR__, 1)."/cache/{$path}");
+      }
+    }
+
     foreach (new DirectoryIterator(\dirname(__DIR__, 1).'/assets/') as $fileinfo) {
       if ('js' !== $fileinfo->getExtension()) {
         continue;
@@ -103,41 +116,52 @@ final class JsAsset
       $fileKey = $fileinfo->getBasename('.js');
 
       if ($path === $fileKey) {
-        return self::loadContent($fileinfo->getRealPath(), $minify);
+        $content = self::loadContent($fileinfo->getRealPath(), $minify);
+        $mini    = $minify ? 'mini/' : '';
+        file_put_contents(\dirname(__DIR__, 1)."/cache/{$mini}{$path}", $content);
+
+        return $content;
       }
 
       $assets[] = $fileKey;
     }
 
-    $jcomposer = file_get_contents(\dirname(__DIR__, 1).'/composer.json');
-    $composer  = json_decode($jcomposer);
+    $composerJson = \dirname(__DIR__, 4).'/composer.json';
+    if (file_exists($composerJson)) {
+      $jcomposer = file_get_contents($composerJson);
+      $composer  = json_decode($jcomposer);
 
-    foreach ($composer->require as $repo => $_version) {
-      if (\in_array($repo, self::IGNORE_REPOS, true)) {
-        continue;
-      }
-      $repoSet = explode('/', $repo);
-      if (\count($repoSet) < 2) {
-        continue;
-      }
-
-      $repoPath = \dirname(__DIR__, 1)."/vendor/{$repoSet[0]}/{$repoSet[1]}/";
-
-      foreach (new DirectoryIterator($repoPath) as $fileinfo) {
-        if ('js' !== $fileinfo->getExtension()) {
+      foreach ($composer->require as $repo => $_version) {
+        if (\in_array($repo, self::IGNORE_REPOS, true)) {
+          continue;
+        }
+        $repoSet = explode('/', $repo);
+        if (\count($repoSet) < 2) {
           continue;
         }
 
-        $fileKey = $fileinfo->getBasename('.js');
-        if (\in_array($fileKey, $assets, true)) {
-          $fileKey = "{$repoSet[0]}.{$repoSet[1]}.{$fileKey}";
-        }
+        $repoPath = \dirname(__DIR__, 3)."/{$repoSet[0]}/{$repoSet[1]}/";
 
-        if ($path === $fileKey) {
-          return self::loadContent($fileinfo->getRealPath(), $minify);
-        }
+        foreach (new DirectoryIterator($repoPath) as $fileinfo) {
+          if ('js' !== $fileinfo->getExtension()) {
+            continue;
+          }
 
-        $assets[] = $fileKey;
+          $fileKey = $fileinfo->getBasename('.js');
+          if (\in_array($fileKey, $assets, true)) {
+            $fileKey = "{$repoSet[0]}.{$repoSet[1]}.{$fileKey}";
+          }
+
+          if ($path === $fileKey) {
+            $content = self::loadContent($fileinfo->getRealPath(), $minify);
+            $mini    = $minify ? 'mini/' : '';
+            file_put_contents(\dirname(__DIR__, 1)."/cache/{$mini}{$path}", $content);
+
+            return $content;
+          }
+
+          $assets[] = $fileKey;
+        }
       }
     }
 
