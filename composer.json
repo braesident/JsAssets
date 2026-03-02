@@ -21,7 +21,7 @@
   "license": "proprietary",
   "autoload": {
     "psr-4": {
-      "exunova\\JsAsset\\": "src/"
+      "braesident\\JsAsset\\": "src/"
     },
     "classmap": [
       "src/"

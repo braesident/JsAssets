@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace exunova\JsAsset;
+namespace braesident\JsAsset;
 
 use DirectoryIterator;
 use MatthiasMullie\Minify\JS as MinifyJS;
@@ -19,7 +19,9 @@ final class JsAsset
 
   private const MANIFEST_FILE = __DIR__.'/../cache/manifest.json';
 
-  /** @var array<string, array{path: string, mtime: int, hash: string}> */
+  /**
+   * @var array<string, array{path: string, mtime: int, hash: string}>
+   */
   private static array $manifest = [];
 
   private static bool $manifestLoaded = false;
@@ -59,7 +61,7 @@ final class JsAsset
           }
 
           $repoPath = \dirname(__DIR__, 3)."/{$repoSet[0]}/{$repoSet[1]}/";
-          if (!is_dir($repoPath)) {
+          if ( ! is_dir($repoPath)) {
             continue;
           }
 
@@ -114,7 +116,7 @@ final class JsAsset
     $pathes = explode('/', $path);
 
     $asset = array_pop($pathes);
-    if (!$asset) {
+    if ( ! $asset) {
       return '';
     }
 
@@ -125,7 +127,7 @@ final class JsAsset
 
     $hash      = $metadata['hash'];
     $directory = $minify ? self::CACHE_MINI_DIR : self::CACHE_DIR;
-    $fileName  = sprintf('%s-%s.js', $asset, $hash);
+    $fileName  = \sprintf('%s-%s.js', $asset, $hash);
     $cacheFile = $directory.'/'.$fileName;
 
     if (file_exists($cacheFile)) {
@@ -157,7 +159,7 @@ final class JsAsset
   }
 
   /**
-   * @return array{path: string, mtime: int, hash: string}|null
+   * @return null|array{path: string, mtime: int, hash: string}
    */
   private static function resolveAssetMetadata(string $asset): ?array
   {
@@ -165,7 +167,7 @@ final class JsAsset
 
     if (isset(self::$manifest[$asset])) {
       $entry = self::$manifest[$asset];
-      if (is_string($entry['path']) && file_exists($entry['path'])) {
+      if (\is_string($entry['path']) && file_exists($entry['path'])) {
         $mtime = filemtime($entry['path']);
         if (false !== $mtime && (int) $mtime === (int) $entry['mtime']) {
           return $entry;
@@ -205,8 +207,8 @@ final class JsAsset
 
   private static function findAssetPath(string $asset): ?string
   {
-    $baseDir  = \dirname(__DIR__, 1).'/assets/';
-    $rawSeen  = [];
+    $baseDir = \dirname(__DIR__, 1).'/assets/';
+    $rawSeen = [];
 
     $localPath = $baseDir.$asset.'.js';
     if (file_exists($localPath)) {
@@ -220,7 +222,7 @@ final class JsAsset
         continue;
       }
 
-      $fileKey = $fileinfo->getBasename('.js');
+      $fileKey           = $fileinfo->getBasename('.js');
       $rawSeen[$fileKey] = true;
       if ($asset === $fileKey) {
         return $fileinfo->getRealPath() ?: $fileinfo->getPathname();
@@ -228,14 +230,14 @@ final class JsAsset
     }
 
     $composerJson = \dirname(__DIR__, 4).'/composer.json';
-    if (!file_exists($composerJson)) {
+    if ( ! file_exists($composerJson)) {
       return null;
     }
 
     $jcomposer = file_get_contents($composerJson);
     $composer  = json_decode($jcomposer);
 
-    if (!isset($composer->require) || !\is_object($composer->require)) {
+    if ( ! isset($composer->require) || ! \is_object($composer->require)) {
       return null;
     }
 
@@ -249,7 +251,7 @@ final class JsAsset
       }
 
       $repoPath = \dirname(__DIR__, 3)."/{$repoSet[0]}/{$repoSet[1]}/";
-      if (!is_dir($repoPath)) {
+      if ( ! is_dir($repoPath)) {
         continue;
       }
 
@@ -284,7 +286,7 @@ final class JsAsset
 
     self::$manifestLoaded = true;
 
-    if (!file_exists(self::MANIFEST_FILE)) {
+    if ( ! file_exists(self::MANIFEST_FILE)) {
       self::$manifest = [];
 
       return;
@@ -298,14 +300,14 @@ final class JsAsset
     }
 
     $data = json_decode($contents, true);
-    if (!\is_array($data)) {
+    if ( ! \is_array($data)) {
       self::$manifest = [];
 
       return;
     }
 
     foreach ($data as $asset => $entry) {
-      if (!\is_array($entry)) {
+      if ( ! \is_array($entry)) {
         continue;
       }
 
@@ -321,13 +323,13 @@ final class JsAsset
 
   private static function persistManifest(): void
   {
-    if (!self::$manifestDirty) {
+    if ( ! self::$manifestDirty) {
       return;
     }
 
     self::ensureDirectory(self::CACHE_DIR);
 
-    $encoded = json_encode(self::$manifest, JSON_PRETTY_PRINT);
+    $encoded = json_encode(self::$manifest, \JSON_PRETTY_PRINT);
     if (false === $encoded) {
       return;
     }
@@ -338,7 +340,7 @@ final class JsAsset
 
   private static function ensureDirectory(string $path): void
   {
-    if (!is_dir($path)) {
+    if ( ! is_dir($path)) {
       mkdir($path, 0777, true);
     }
   }
@@ -347,7 +349,7 @@ final class JsAsset
   {
     $directory = $minify ? self::CACHE_MINI_DIR : self::CACHE_DIR;
 
-    if (!is_dir($directory)) {
+    if ( ! is_dir($directory)) {
       return;
     }
 
@@ -358,13 +360,13 @@ final class JsAsset
     }
 
     foreach ($files as $file) {
-      if (!\is_string($file)) {
+      if ( ! \is_string($file)) {
         continue;
       }
 
       if (null !== $keepHash) {
-        $expectedSuffix = sprintf('%s-%s.js', $asset, $keepHash);
-        if (substr($file, -\strlen($expectedSuffix)) === $expectedSuffix) {
+        $expectedSuffix = \sprintf('%s-%s.js', $asset, $keepHash);
+        if (mb_substr($file, -mb_strlen($expectedSuffix)) === $expectedSuffix) {
           continue;
         }
       }
@@ -373,4 +375,3 @@ final class JsAsset
     }
   }
 }
-

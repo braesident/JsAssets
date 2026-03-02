@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use exunova\JsAsset\JsAsset;
+use braesident\JsAsset\JsAsset;
 
 // require_once __DIR__.'/src/JsAsset.php';
 require_once __DIR__.'/vendor/autoload.php';
