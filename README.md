@@ -4,7 +4,7 @@
 
 The class works with:
 - local files in `assets/*.js`
-- optional JS files from Composer dependencies (`vendor/<vendor>/<package>/*.js`)
+- optional JS files from Composer dependencies (`vendor/<vendor>/<package>/**/*.js`, excluding nested `vendor` directories)
 
 ## Purpose
 

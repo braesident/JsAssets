@@ -65,12 +65,8 @@ final class JsAsset
             continue;
           }
 
-          foreach (new DirectoryIterator($repoPath) as $fileinfo) {
-            if ($fileinfo->isDot() || 'js' !== $fileinfo->getExtension()) {
-              continue;
-            }
-
-            $fileKey = $fileinfo->getBasename('.js');
+          foreach (self::findPackageJsFiles($repoPath) as $assetPath) {
+            $fileKey = pathinfo($assetPath, \PATHINFO_FILENAME);
             if (\in_array($fileKey, $assets, true)) {
               $fileKey = "{$repoSet[0]}.{$repoSet[1]}.{$fileKey}";
             }
@@ -255,12 +251,8 @@ final class JsAsset
         continue;
       }
 
-      foreach (new DirectoryIterator($repoPath) as $fileinfo) {
-        if ($fileinfo->isDot() || 'js' !== $fileinfo->getExtension()) {
-          continue;
-        }
-
-        $fileKey       = $fileinfo->getBasename('.js');
+      foreach (self::findPackageJsFiles($repoPath) as $assetPath) {
+        $fileKey       = pathinfo($assetPath, \PATHINFO_FILENAME);
         $effectiveKey  = $fileKey;
         $rawBaseExists = isset($rawSeen[$fileKey]);
         if ($rawBaseExists) {
@@ -268,7 +260,7 @@ final class JsAsset
         }
 
         if ($asset === $effectiveKey) {
-          return $fileinfo->getRealPath() ?: $fileinfo->getPathname();
+          return realpath($assetPath) ?: $assetPath;
         }
 
         $rawSeen[$fileKey] = true;
@@ -276,6 +268,44 @@ final class JsAsset
     }
 
     return null;
+  }
+
+  /**
+   * @return array<int, string>
+   */
+  private static function findPackageJsFiles(string $directory): array
+  {
+    $files = [];
+
+    self::collectPackageJsFiles(rtrim($directory, '/\\'), $files);
+
+    return $files;
+  }
+
+  /**
+   * @param array<int, string> $files
+   */
+  private static function collectPackageJsFiles(string $directory, array &$files): void
+  {
+    foreach (new DirectoryIterator($directory) as $fileinfo) {
+      if ($fileinfo->isDot() || ! $fileinfo->isFile() || 'js' !== $fileinfo->getExtension()) {
+        continue;
+      }
+
+      $files[] = $fileinfo->getPathname();
+    }
+
+    foreach (new DirectoryIterator($directory) as $fileinfo) {
+      if ($fileinfo->isDot() || ! $fileinfo->isDir() || $fileinfo->isLink()) {
+        continue;
+      }
+
+      if ('vendor' === mb_strtolower($fileinfo->getFilename())) {
+        continue;
+      }
+
+      self::collectPackageJsFiles($fileinfo->getPathname(), $files);
+    }
   }
 
   private static function loadManifest(): void
